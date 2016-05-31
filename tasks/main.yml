@@ -1,0 +1,86 @@
+---
+- name: install required software
+  become: yes
+  apt: name={{ item }} state=present cache_valid_time=3600 update_cache=yes
+  with_items:
+    - iptables
+    - dnsmasq
+    - hostapd
+
+- name: create internal lan interface
+  become: yes
+  blockinfile:
+    dest: /etc/network/interfaces
+    block: |
+      auto lan
+      iface lan inet static
+        address {{ lanspace }}.1
+        netmask 255.255.255.0
+
+- name: create WiFi config file
+  become: yes
+  template:
+    src=hostapd.conf.j2
+    dest=/etc/hostapd/hostapd.conf
+    owner=root
+    group=root
+    mode=0644
+
+- name: enable hostapd
+  become: yes
+  lineinfile:
+    dest=/etc/default/hostapd
+    line="DAEMON_CONF=/etc/hostapd/hostapd.conf"
+
+- name: install dnsmasq config
+  become: yes
+  template:
+    src=dnsmasq.conf.j2
+    dest=/etc/dnsmasq.conf
+    owner=root
+    group=root
+    mode=0644
+  notify: restart dnsmasq
+
+- name: install dnsmasq restart script
+  become: yes
+  copy:
+    src=dnsmasq.sh
+    dest=/etc/network/if-up.d/dnsmasq.sh
+    owner=root
+    group=root
+    mode=0755
+  notify: restart hostapd
+
+- name: enable ip forwarding
+  become: yes
+  sysctl: name="net.ipv4.ip_forward" value=1 sysctl_set=yes state=present reload=yes
+
+- name: install routing setup script
+  become: yes
+  copy:
+    src=router.sh
+    dest=/etc/network/if-up.d/router.sh
+    owner=root
+    group=root
+    mode=0755
+  notify: start router script
+
+- name: install routing setup script to autostart
+  become: yes
+  lineinfile:
+    dest=/etc/rc.local
+    line="/etc/network/if-up.d/router.sh"
+
+- name: run routing restart script
+  become: yes
+  command: /etc/network/if-up.d/router.sh
+
+- name: install routing restart script
+  become: yes
+  copy:
+    src=restart-router.sh
+    dest=/usr/local/bin/restart-router.sh
+    owner=root
+    group=root
+    mode=0755

@@ -1,0 +1,13 @@
+---
+
+- name: restart hostapd
+  service: name=hostapd state=restarted
+  become: yes
+
+- name: start router script
+  command: /etc/network/if-up.d/router.sh
+  become: yes
+
+- name: restart dnsmasq
+  service: name=dnsmasq state=restarted
+  become: yes
