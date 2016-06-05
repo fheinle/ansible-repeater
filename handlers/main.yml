@@ -11,3 +11,7 @@
 - name: restart dnsmasq
   service: name=dnsmasq state=restarted
   become: yes
+
+- name: run routing restart script
+  become: yes
+  command: /etc/network/if-up.d/router.sh

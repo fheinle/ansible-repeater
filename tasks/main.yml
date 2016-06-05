@@ -71,10 +71,8 @@
   lineinfile:
     dest=/etc/rc.local
     line="/etc/network/if-up.d/router.sh"
-
-- name: run routing restart script
-  become: yes
-  command: /etc/network/if-up.d/router.sh
+  notify:
+    - run routing restart script
 
 - name: install routing restart script
   become: yes
