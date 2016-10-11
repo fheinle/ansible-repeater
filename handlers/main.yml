@@ -11,6 +11,7 @@
 - name: restart dnsmasq
   service: name=dnsmasq state=restarted
   become: yes
+  when: ansible_virtualization_type != 'virtualbox'
 
 - name: run routing restart script
   become: yes
